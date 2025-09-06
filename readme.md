@@ -2,7 +2,7 @@
 
 A high-performance, real-time trading system built to handle low-latency order execution at scale. The platform combines modular, event-driven architecture with efficient queuing, real-time communication, and scalable infrastructure.
 
-![Screenshot](https://github.com/user-attachments/assets/0c35661f-c6a7-4495-9e8a-9173ca331fd6)
+
 
 ---
 
