@@ -1,5 +1,7 @@
 # ⚡ Exchange Platform
 
+DEPLOYED LINK - https://exchange-ruby-iota.vercel.app
+
 A high-performance, real-time trading system built to handle low-latency order execution at scale. The platform combines modular, event-driven architecture with efficient queuing, real-time communication, and scalable infrastructure.
 
 
