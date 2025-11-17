@@ -1,4 +1,6 @@
 import {
+  CandlestickSeries,
+  CandlestickSeriesPartialOptions,
   ColorType,
   createChart as createLightWeightChart,
   CrosshairMode,
@@ -30,6 +32,10 @@ export class ChartManager {
     initialData: { timestamp: number; open: number; high: number; low: number; close: number; volume?: number }[],
     layout: { background: string; color: string }
   ) {
+    if (typeof window === "undefined") {
+      throw new Error("ChartManager must be instantiated in the browser");
+    }
+
     const chart = createLightWeightChart(ref, {
       autoSize: true,
       overlayPriceScales: {
@@ -62,14 +68,21 @@ export class ChartManager {
     });
     this.chart = chart;
 
-    // @ts-expect-error - addCandlestickSeries method exists but type definition may be incomplete
-    this.candleSeries = chart.addCandlestickSeries({
-      upColor: '#02c176',
-      downColor: '#ff4747',
+    const seriesOptions: CandlestickSeriesPartialOptions = {
+      upColor: "#02c176",
+      downColor: "#ff4747",
       borderVisible: false,
-      wickUpColor: '#02c176',
-      wickDownColor: '#ef5350'
-    });
+      wickUpColor: "#02c176",
+      wickDownColor: "#ef5350",
+    };
+
+    // lightweight-charts v5 uses addSeries instead of addCandlestickSeries.
+    if ("addCandlestickSeries" in chart) {
+      // @ts-expect-error - legacy signature is still valid at runtime
+      this.candleSeries = chart.addCandlestickSeries(seriesOptions);
+    } else {
+      this.candleSeries = chart.addSeries(CandlestickSeries, seriesOptions);
+    }
 
     this.candleSeries.setData(
       initialData.map((data) => ({

@@ -49,13 +49,24 @@ export function Depth({market }:{market:string}){
         },`DEPTH-${market}`);
    SignalingManager.getInstance().sendMessage({"method":"SUBSCRIBE","params":[`depth.${market}`]});
 
-        getDepth(market).then(d => {
+        getDepth(market)
+          .then((d) => {
             setbids(d.bids.reverse());
             setasks(d.asks);
-        })
-            getTicker(market).then(t=>{
-                setprice(t.lastPrice)
-            })
+          })
+          .catch((error) => {
+            console.error("Failed to fetch depth:", error);
+          });
+
+        getTicker(market)
+          .then((t) => {
+            if (t?.lastPrice) {
+              setprice(t.lastPrice);
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to fetch ticker:", error);
+          });
 
             return ()=>{
                  SignalingManager.getInstance().sendMessage({"method":"UNSUBSCRIBE" ,"params":[`depth.200ms.${market}`]});

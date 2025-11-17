@@ -22,17 +22,37 @@ export const MarketBar = ({market}: {market: string}) => {
   useEffect(() => {
     //fetch the Image from getAllInfo
     async function fetchImage() {
-      const data: CoinData[] = await getAllInfo();
-      const image = data.find((d: CoinData) => d.symbol.toLowerCase() === market.split("_")[0].toLowerCase())?.image;
-      settokenImage(image || null);
-      setimage(data.find((d: CoinData) => d.symbol.toLowerCase() === "usdc")?.image || null);
+      try {
+        const data: CoinData[] = await getAllInfo();
+        const image = data.find(
+          (d: CoinData) =>
+            d.symbol.toLowerCase() === market.split("_")[0].toLowerCase()
+        )?.image;
+        settokenImage(image || null);
+        setimage(
+          data.find((d: CoinData) => d.symbol.toLowerCase() === "usdc")?.image ||
+            null
+        );
+      } catch (error) {
+        console.error("Failed to fetch token images:", error);
+      }
     }
     fetchImage();
   }, [market]);
 
 
     useEffect(() => {
-        getTicker(market).then(setTicker);
+        let cancelled = false;
+        const subscriptionKey = `TICKER-${market}`;
+        getTicker(market)
+          .then((result) => {
+            if (!cancelled && result) {
+              setTicker(result);
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to fetch ticker snapshot:", error);
+          });
         SignalingManager.getInstance().registerCallback("ticker",(data: unknown)=>{
 
             const tickerData = data as Ticker;
@@ -48,13 +68,14 @@ export const MarketBar = ({market}: {market: string}) => {
                 trades: tickerData?.trades ?? prevTicker?.trades ?? '',
                 volume: tickerData?.volume ?? prevTicker?.volume ?? '',
             }))
-        },`ticker-${market}`)
+        },subscriptionKey)
 
     SignalingManager.getInstance().sendMessage({"method":"SUBSCRIBE","params":[`ticker.${market}`]});
 
     return () => {
+        cancelled = true;
         SignalingManager.getInstance().sendMessage({"method":"UNSUBSCRIBE","params":[`ticker.${market}`]});
-        SignalingManager.getInstance().deRegisterCallback("ticker",`TICKER-${market}`);
+        SignalingManager.getInstance().deRegisterCallback("ticker",subscriptionKey);
     }
         
     }, [market])

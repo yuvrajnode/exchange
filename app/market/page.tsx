@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { CombineData, CombinedCryptoData } from "../utils/combine-data";
-import { useEffect,useRef,useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Appbar from "@/components/ui/Appbar";
 
@@ -626,26 +626,26 @@ function Carousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<number>(0);
 
+  const handlePrev = useCallback(() => {
+    setDirection(-1);
+    setCurrentIndex((prevIndex) =>
+      prevIndex === 0 ? carouselItems.length - 1 : prevIndex - 1
+    );
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setDirection(1);
+    setCurrentIndex((prevIndex) =>
+      prevIndex === carouselItems.length - 1 ? 0 : prevIndex + 1
+    );
+  }, []);
+
   useEffect(() => {
     const timer = setInterval(() => {
       handleNext();
     }, 7000);
     return () => clearInterval(timer);
-  }, [currentIndex]);
-
-  const handlePrev = () => {
-    setDirection(-1);
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? carouselItems.length - 1 : prevIndex - 1
-    );
-  };
-
-  const handleNext = () => {
-    setDirection(1);
-    setCurrentIndex((prevIndex) =>
-      prevIndex === carouselItems.length - 1 ? 0 : prevIndex + 1
-    );
-  };
+  }, [handleNext]);
 
   const slideVariants: Variants = {
     enter: (direction: number) => ({

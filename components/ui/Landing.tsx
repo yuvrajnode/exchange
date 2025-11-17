@@ -8,7 +8,7 @@ export default function Landing(){
     return <>
         <div className=" flex flex-row p-4  bg-neutral-900  text-gray-400  tracking-wider   items-center rounded-2xl ml-10 mr-10 sticky-top top-10 z-0  text-md  text-lg" style={{fontFamily:"Fajalla One, sans-serif"}} >
             <div>
-                    <Image src={ "/logo"} alt=" logo " height={20 } width={30 } loading="lazy"></Image>
+                    <Image src="/logo.svg" alt="logo" height={20} width={30} loading="lazy" />
             </div>
             <div className=" flex flex-1 ">
                     <ul className=" flex flex-1 gap-20 justify-center cursor-pointer ">
