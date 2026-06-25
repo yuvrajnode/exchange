@@ -100,10 +100,10 @@ export default function Component() {
 
   if (!data) {
     return (
-      <div className="bg-[#121212] text-white min-h-screen p-4 tracking-widest">
+      <div className="bg-[var(--nx-bg)] text-white min-h-screen p-4 tracking-widest">
           <div className="max-w-7xl mx-auto">
               {/* Carousel Skeleton */}
-              <div className="relative bg-blue-900/10 rounded-xl w-full  overflow-hidden mb-6 h-80">
+              <div className="relative nx-glass rounded-2xl w-full  overflow-hidden mb-6 h-80">
                   <div className="p-8 space-y-4  absolute  bottom-1">
                       <Skeleton className="h-10 w-full bg-neutral-700" />
                       <Skeleton className="h-6 w-1/2 bg-neutral-700" />
@@ -117,7 +117,7 @@ export default function Component() {
               {/* Three Column Grid Skeleton */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                   {[1, 2, 3].map((index) => (
-                      <div key={index} className="bg-blue-900/10 p-4 rounded-xl">
+                      <div key={index} className="nx-glass p-4 rounded-2xl">
                           <Skeleton className="h-8 w-32 mb-4 bg-neutral-700" />
                           <div className="space-y-4">
                               {[1, 2, 3, 4, 5].map((item) => (
@@ -141,7 +141,7 @@ export default function Component() {
               </div>
 
               {/* Table Skeleton */}
-              <div className="bg-blue-900/10 p-4 rounded-xl">
+              <div className="nx-glass p-4 rounded-2xl">
                   <div className="flex space-x-4 mb-4">
                       <Skeleton className="h-8 w-20 bg-neutral-700" />
                       <Skeleton className="h-8 w-20 bg-neutral-700" />
@@ -218,15 +218,17 @@ export default function Component() {
   const newEntries = getNewListings(data);
 const number=0;
   return (
-    <div className="bg-[#121212] font-inter text-white min-h-screen p-4 tracking-widest">
-      <div className="max-w-7xl mx-auto">
+    <div className="relative bg-[var(--nx-bg)] font-inter text-white min-h-screen tracking-widest">
+      <div className="pointer-events-none fixed inset-0 nx-grid-bg opacity-30" />
+      <div className="pointer-events-none fixed -top-40 right-0 h-[420px] w-[420px] rounded-full bg-violet-600/15 blur-[140px]" />
+      <div className="relative z-10 max-w-7xl mx-auto p-4">
          <Appbar  TrueButton={number}></Appbar>
-       
+
         <Carousel />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <motion.div 
-            className="bg-neutral-900/50 cursor-pointer  p-6 rounded-xl flex items-center gap-6 "
+          <motion.div
+            className="nx-glass nx-glow-hover cursor-pointer  p-6 rounded-2xl flex items-center gap-6 "
             transition={{ duration: 0.2 }}
             onClick={() => window.location.href = "/trade/TATA_INR"}
           >
@@ -253,8 +255,8 @@ const number=0;
             </div>
           </motion.div>
 
-          <motion.div 
-            className="bg-neutral-900/50 cursor-pointer  p-6 rounded-xl flex items-center gap-6"
+          <motion.div
+            className="nx-glass nx-glow-hover cursor-pointer  p-6 rounded-2xl flex items-center gap-6"
             transition={{ duration: 0.2 }}
             onClick={() => window.location.href = "/trade/TATA_INR"}
           >
@@ -284,23 +286,23 @@ const number=0;
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-blue-900/10  p-4 rounded-xl">
-            <h2 className="text-xl font-semibold mb-4">New</h2>
+          <div className="nx-glass  p-5 rounded-2xl">
+            <h2 className="text-lg font-semibold mb-4 nx-gradient-text">New</h2>
             <CryptoList items={newEntries} />
           </div>
 
-          <div className="bg-blue-900/10  p-4 rounded-xl">
-            <h2 className="text-xl font-semibold mb-4">Top Gainers</h2>
+          <div className="nx-glass  p-5 rounded-2xl">
+            <h2 className="text-lg font-semibold mb-4 nx-gradient-text">Top Gainers</h2>
             <CryptoList items={topGainer} />
           </div>
 
-          <div className="bg-blue-900/10  p-4 rounded-xl">
-            <h2 className="text-xl font-semibold mb-4">Popular</h2>
+          <div className="nx-glass  p-5 rounded-2xl">
+            <h2 className="text-lg font-semibold mb-4 nx-gradient-text">Popular</h2>
             <CryptoList items={mostPopular} />
           </div>
         </div>
 
-        <div className="bg-neutral-900/10 p-4 rounded-xl">
+        <div className="nx-glass p-5 rounded-2xl">
             <div className="flex space-x-4 mb-4">
             <motion.button
               className="px-4 py-2 text-white bg-neutral-800/50 rounded-lg font-medium border border-neutral-700"
@@ -675,7 +677,7 @@ function Carousel() {
   const currentItem = carouselItems[currentIndex];
 
   return (
-    <div className="relative bg-[#1c1c1c] rounded-xl overflow-hidden mb-6 pt-32">
+    <div className="relative nx-glass nx-glow rounded-2xl overflow-hidden mb-6 pt-32">
       <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={currentIndex}
