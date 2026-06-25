@@ -1,36 +1,60 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { PrimaryButton, SuccessButton } from "@/components/ui//core/button"
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
+import { PrimaryButton, SuccessButton } from "@/components/ui/core/button";
 
-export default function  Appbar  ({TrueButton} :{TrueButton: number}) {
-    const route = usePathname();
-    const router = useRouter()
+export default function Appbar({ TrueButton }: { TrueButton: number }) {
+  const route = usePathname();
+  const router = useRouter();
 
-    return <div className="text-slate-500 border-white border- mb-5 p-5  bg-blue-900/10">
-        <div className="flex justify-between items-center p-2">
-            <div className="flex space-x-20">
-                <div className={`text-xl pl-4 flex flex-col justify-center cursor-pointer  text-white ` } onClick={() => router.push('/')}>
-                    Exchange
-                </div>
-                <div className={`text-sm pt-1 flex flex-col justify-center pl-8 cursor-pointer hover:text-white ${route.startsWith('/markets') ? 'text-white' : 'text-slate-500'}`} onClick={() => router.push('/market')}>
-                    Markets
-                </div>
-                <div className={`text-sm pt-1 flex flex-col justify-center pl-8 cursor-pointer hover:text-white` } onClick={() => router.push('/trade/SOL_USDC')}>
-                   Explore Trade
-                </div>
-            </div>
-            {TrueButton==1?(<Button/>):(null)}
+  const linkClass = (active: boolean) =>
+    `cursor-pointer text-sm font-medium tracking-wide transition-colors ${
+      active ? "text-white" : "text-neutral-400 hover:text-white"
+    }`;
+
+  return (
+    <div className="sticky top-0 z-40 mb-5 px-4 pt-4">
+      <div className="nx-glass flex items-center justify-between rounded-2xl px-5 py-3">
+        <div className="flex items-center gap-8 md:gap-12">
+          <button
+            type="button"
+            className="flex cursor-pointer items-center gap-2"
+            onClick={() => router.push("/")}
+          >
+            <Image src="/logo.svg" alt="Nexus logo" height={22} width={26} />
+            <span className="text-lg font-bold tracking-wide nx-gradient-text">
+              NEXUS
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={linkClass(route.startsWith("/market"))}
+            onClick={() => router.push("/market")}
+          >
+            Markets
+          </button>
+          <button
+            type="button"
+            className={linkClass(route.startsWith("/trade"))}
+            onClick={() => router.push("/trade/SOL_USDC")}
+          >
+            Trade
+          </button>
         </div>
+
+        {TrueButton === 1 ? <ActionButtons /> : null}
+      </div>
     </div>
+  );
 }
 
-function Button(){
-    return    <div className="flex">
-                <div className=" mx-10 p-2 mr-2">
-                   <SuccessButton>Deposit</SuccessButton> 
-                    <PrimaryButton>Withdraw</PrimaryButton>
-                </div>
-            </div>
+function ActionButtons() {
+  return (
+    <div className="flex items-center gap-2">
+      <SuccessButton>Deposit</SuccessButton>
+      <PrimaryButton>Withdraw</PrimaryButton>
+    </div>
+  );
 }
