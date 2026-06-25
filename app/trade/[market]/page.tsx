@@ -1,6 +1,7 @@
 "use client";
 import { useParams } from "next/navigation";
 import { Depth } from "@/components/ui/depth/Depth";
+import { RecentTrades } from "@/components/ui/depth/RecentTrades";
 import { TradeView } from "@/components/ui/Tradeview";
 import Appbar from "@/components/ui/Appbar";
 import { SwapUI } from "@/components/ui/SwapUi";
@@ -24,7 +25,7 @@ export default function Page() {
         {/* Main trading grid */}
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
           {/* Chart */}
-          <div className="nx-glass rounded-2xl p-2 lg:col-span-7">
+          <div className="nx-glass rounded-2xl p-2 lg:col-span-6">
             <TradeView market={market as string} />
           </div>
 
@@ -33,8 +34,13 @@ export default function Page() {
             <Depth market={market as string} />
           </div>
 
+          {/* Recent trades */}
+          <div className="nx-glass max-h-[560px] rounded-2xl p-3 lg:col-span-2">
+            <RecentTrades market={market as string} />
+          </div>
+
           {/* Order entry */}
-          <div className="nx-glass rounded-2xl lg:col-span-3">
+          <div className="nx-glass rounded-2xl lg:col-span-2">
             <SwapUI market={market as string} />
           </div>
         </div>
