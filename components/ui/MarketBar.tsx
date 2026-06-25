@@ -84,13 +84,13 @@ export const MarketBar = ({market}: {market: string}) => {
     // 
 
     return <div>
-        <div className="flex items-center  flex-row relative w-[780px] overflow-hidden h-full border-slate-800">
+        <div className="flex items-center  flex-row relative w-full overflow-hidden h-full border-slate-800">
             <div className="flex items-center justify-between flex-row no-scrollbar overflow-auto pr-4">
                     <Ticker market={market} TokenImage={tokenImage ?? ""} image={usdcImage ?? ""}/>
                     <div className="flex items-center flex-row space-x-8 pl-4">
                         <div className="flex flex-col h-full justify-center">
-                            <p className={`font-medium tabular-nums text-greenText text-md text-green-500`}>${ticker?.lastPrice}</p>
-                            <p className="font-medium   tabular-nums">${ticker?.lastPrice}</p>
+                            <p className={`font-semibold tabular-nums text-lg ${Number(ticker?.priceChange) >= 0 ? "text-green-500" : "text-red-500"}`}>${ticker?.lastPrice}</p>
+                            <p className="font-medium text-xs text-slate-400 tabular-nums">Last price</p>
                         </div>
                         <div className="flex flex-col">
                             <p className={`font-medium text-xs text-slate-400`}>24H Change</p>
