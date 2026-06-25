@@ -5,11 +5,14 @@ import {
   ColorType,
   createChart,
   IChartApi,
+  LineSeries,
   UTCTimestamp,
 } from "lightweight-charts";
 import {
   ChevronLeft,
   ChevronRight,
+  Search,
+  Star,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -77,6 +80,30 @@ export interface LineCryptoData {
 
 export default function Component() {
   const [data, setData] = useState<CombinedCryptoData[] | null>(null);
+  const [search, setSearch] = useState("");
+  const [tab, setTab] = useState<"spot" | "favorites">("spot");
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      return JSON.parse(localStorage.getItem("nx-favorites") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleFavorite = useCallback((symbol: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(symbol)
+        ? prev.filter((s) => s !== symbol)
+        : [...prev, symbol];
+      try {
+        localStorage.setItem("nx-favorites", JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
 
 
   useEffect(() => {
@@ -303,37 +330,40 @@ const number=0;
         </div>
 
         <div className="nx-glass p-5 rounded-2xl">
-            <div className="flex space-x-4 mb-4">
-            <motion.button
-              className="px-4 py-2 text-white bg-neutral-800/50 rounded-lg font-medium border border-neutral-700"
-              whileHover={{ 
-              scale: 1.05,
-              backgroundColor: "rgba(255,255,255,0.1)",
-              transition: { duration: 0.2 }
-              }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              Spot
-            </motion.button>
-            <motion.button
-              className="px-4 py-2 text-neutral-400 rounded-lg font-medium hover:text-white"
-              whileHover={{ 
-              scale: 1.05,
-              backgroundColor: "rgba(255,255,255,0.05)",
-              transition: { duration: 0.2 }
-              }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
-              Favorites
-            </motion.button>
+            <div className="flex flex-col gap-4 mb-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex gap-2 rounded-xl bg-black/30 p-1">
+                {(["spot", "favorites"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTab(t)}
+                    className={`rounded-lg px-4 py-1.5 text-sm font-medium capitalize transition-all ${
+                      tab === t
+                        ? "bg-white/10 text-white shadow-[0_0_18px_-8px_rgba(120,160,255,0.8)]"
+                        : "text-neutral-400 hover:text-white"
+                    }`}
+                  >
+                    {t === "favorites" ? `Favorites (${favorites.length})` : t}
+                  </button>
+                ))}
+              </div>
+              <div className="relative w-full md:w-72">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search markets…"
+                  className="h-10 w-full rounded-xl border border-white/10 bg-black/30 pl-9 pr-3 text-sm text-white outline-none transition focus:border-cyan-400/60"
+                />
+              </div>
             </div>
-          <CryptoTable data={data} />
+          <CryptoTable
+            data={data}
+            search={search}
+            tab={tab}
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+          />
         </div>
       </div>
     </div>
@@ -437,56 +467,89 @@ interface CryptoTableRowProps {
   volume: number;
   change: number;
   klineData: LineCryptoDataPoint[] | undefined;
+  isFavorite: boolean;
+  onToggleFavorite: (symbol: string) => void;
 }
 
-function CryptoTable({ data }: { data: CombinedCryptoData[] | null }) {
+function CryptoTable({
+  data,
+  search,
+  tab,
+  favorites,
+  onToggleFavorite,
+}: {
+  data: CombinedCryptoData[] | null;
+  search: string;
+  tab: "spot" | "favorites";
+  favorites: string[];
+  onToggleFavorite: (symbol: string) => void;
+}) {
   if (!data) return null;
+
+  const query = search.trim().toLowerCase();
+  const rows = data
+    .slice()
+    .sort((a, b) => b.market_cap - a.market_cap)
+    .filter((item) => !item.symbol.toLowerCase().includes("usdc"))
+    .filter((item) =>
+      query
+        ? item.name.toLowerCase().includes(query) ||
+          item.symbol.toLowerCase().includes(query)
+        : true
+    )
+    .filter((item) =>
+      tab === "favorites" ? favorites.includes(item.symbol.toUpperCase()) : true
+    );
+
   return (
     <table className="w-full">
       <thead>
-        <tr className="text-neutral-400 text-md border-b border-neutral-800">
-          <th className="text-left pl-4  font-normal  tracking-wide pb-4">
-            Name
+        <tr className="text-neutral-400 text-sm border-b border-white/10">
+          <th className="text-left pl-4 font-normal tracking-wide pb-4">Name</th>
+          <th className="text-right font-normal tracking-wide pb-4">Price</th>
+          <th className="text-right font-normal tracking-wide pb-4">
+            Market Cap
           </th>
-          <th className="text-right font-normal  tracking-wide pb-4">Price</th>
-          <th className="text-right font-normal  tracking-wide pb-4">
-            ↓Market Cap
-          </th>
-          <th className="text-right font-normal  tracking-wide pb-4">
+          <th className="text-right font-normal tracking-wide pb-4">
             24h Volume
           </th>
-          <th className="text-right font-normal  tracking-wide pb-4">
+          <th className="text-right font-normal tracking-wide pb-4">
             24h Change
           </th>
-          <th className="text-right font-normal  tracking-wide pb-4">
+          <th className="text-right font-normal tracking-wide pb-4">
             Last 7 Days
           </th>
         </tr>
       </thead>
-      <tbody className="">
-        {data
-          ?.sort((a, b) => b.market_cap - a.market_cap)
-          .slice(0, -5)
-          .filter((item) => !item.symbol.toLowerCase().includes("usdc"))
-          .map((item, index) => {
-            //Now we have to Take each Item and Match the data from the Table and then
-            // const data = dataKlines?.find((data:any) => data.symbol === item.symbol);
-            // if (!data) return null;
-
-            return (
-              <CryptoTableRow
-                key={index}
-                image={item.image}
-                name={item.name}
-                symbol={item.symbol}
-                price={item.current_price}
-                marketCap={item.market_cap}
-                volume={item.total_volume}
-                change={item.price_change_percentage_24h}
-                klineData={item.KlineData}
-              />
-            );
-          })}
+      <tbody>
+        {rows.length === 0 ? (
+          <tr>
+            <td
+              colSpan={6}
+              className="py-12 text-center text-neutral-500"
+            >
+              {tab === "favorites"
+                ? "No favorites yet — tap the ☆ on any market to add one."
+                : "No markets match your search."}
+            </td>
+          </tr>
+        ) : (
+          rows.map((item) => (
+            <CryptoTableRow
+              key={item.id}
+              image={item.image}
+              name={item.name}
+              symbol={item.symbol}
+              price={item.current_price}
+              marketCap={item.market_cap}
+              volume={item.total_volume}
+              change={item.price_change_percentage_24h}
+              klineData={item.KlineData}
+              isFavorite={favorites.includes(item.symbol.toUpperCase())}
+              onToggleFavorite={onToggleFavorite}
+            />
+          ))
+        )}
       </tbody>
     </table>
   );
@@ -501,6 +564,8 @@ function CryptoTableRow({
   volume,
   change,
   klineData,
+  isFavorite,
+  onToggleFavorite,
 }: CryptoTableRowProps) {
   function formatNumber(value: number) {
     if (value >= 1e12) {
@@ -527,11 +592,26 @@ function CryptoTableRow({
       }
     >
       <td className="py-4 pl-2 flex items-center first:rounded-l-xl last:rounded-r-xl">
-        <motion.div 
+        <button
+          type="button"
+          aria-label={isFavorite ? "Remove favorite" : "Add favorite"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite(symbol.toUpperCase());
+          }}
+          className="mr-3 text-neutral-500 transition-colors hover:text-amber-300"
+        >
+          <Star
+            className="h-4 w-4"
+            fill={isFavorite ? "#fbbf24" : "none"}
+            color={isFavorite ? "#fbbf24" : "currentColor"}
+          />
+        </button>
+        <motion.div
           whileHover={{ scale: 1.1 }}
           className="bg-neutral-700 rounded-full mr-5"
         >
-            
+
           <Image
             src={image}
             alt={symbol}
@@ -555,7 +635,7 @@ function CryptoTableRow({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        ${price}
+        {formatCurrency(price)}
       </motion.td>
       <motion.td 
         className="text-right py-4"
@@ -577,11 +657,12 @@ function CryptoTableRow({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className={`text-right py-4 ${
-          change > 0 ? "text-green-500" : "text-red-500"
+        className={`text-right py-4 tabular-nums ${
+          change >= 0 ? "text-green-500" : "text-red-500"
         }`}
       >
-        {change} %
+        {change >= 0 ? "+" : ""}
+        {change?.toFixed(2)}%
       </motion.td>
       <motion.td 
         initial={{ opacity: 0 }}
@@ -839,15 +920,17 @@ const CryptoLineChart = ({ data, color }: {data: LineCryptoDataPoint[], color: s
       borderVisible: false,
     });
 
-    // const lineSeries = chart.addSeries({
-    //   color: color as string,
-    //   lineWidth: 2,
-    //   lastValueVisible: false, // Hide the value at the end of the line
-    //   priceLineVisible: false, // Hide the price line
-    // });
-    
-
-    // lineSeries.setData(formattedData);
+    if (formattedData.length) {
+      const lineSeries = chart.addSeries(LineSeries, {
+        color,
+        lineWidth: 2,
+        lastValueVisible: false,
+        priceLineVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      lineSeries.setData(formattedData);
+      chart.timeScale().fitContent();
+    }
 
     chartRef.current = chart;
 
@@ -856,12 +939,8 @@ const CryptoLineChart = ({ data, color }: {data: LineCryptoDataPoint[], color: s
     };
   }, [formattedData, color]);
 
-  if (!data)
-    return (
-      <div className="w-40 bg-[#1E1E1E]">
-        <div />
-      </div>
-    );
+  if (!data?.length)
+    return <div className="h-[30px] w-28 opacity-30" />;
 
   return (
     <div className="w-28 bg-transparent">
