@@ -1,16 +1,35 @@
-
-export const PrimaryButton = ({ children, onClick }: { children: string, onClick?: () => void }) => {
-    return <button type="button" onClick={onClick} className="text-center font-semibold rounded-lg focus:ring-blue-200 focus:none focus:outline-none hover:opacity-90 disabled:opacity-80 disabled:hover:opacity-80 relative overflow-hidden h-[32px] text-sm px-3 py-1.5 mr-4 ">
-        <div className="absolute inset-0 bg-blue-500 opacity-[16%]"></div>
-        <div className="flex flex-row items-center justify-center gap-4"><p className="text-blue-500">{children}</p></div>
+export const PrimaryButton = ({
+  children,
+  onClick,
+}: {
+  children: string;
+  onClick?: () => void;
+}) => {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="relative h-[34px] overflow-hidden rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 text-sm font-semibold text-blue-300 transition-all hover:border-blue-400/60 hover:bg-blue-500/20 hover:text-blue-200 focus:outline-none active:scale-95"
+    >
+      {children}
     </button>
+  );
+};
 
-} 
-
-export const SuccessButton = ({ children, onClick }: { children: string, onClick?: () => void }) => {
-    return <button type="button" onClick={onClick} className="text-center font-semibold rounded-lg focus:ring-green-200 focus:none focus:outline-none hover:opacity-90 disabled:opacity-80 disabled:hover:opacity-80 relative overflow-hidden h-[32px] text-sm px-3 py-1.5 mr-4 ">
-        <div className="absolute inset-0 bg-green-500 opacity-[16%]"></div>
-        <div className="flex flex-row items-center justify-center gap-4"><p className="text-green-500">{children}</p></div>
+export const SuccessButton = ({
+  children,
+  onClick,
+}: {
+  children: string;
+  onClick?: () => void;
+}) => {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="relative h-[34px] overflow-hidden rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 text-sm font-semibold text-emerald-300 transition-all hover:border-emerald-400/60 hover:bg-emerald-500/20 hover:text-emerald-200 focus:outline-none active:scale-95"
+    >
+      {children}
     </button>
-
-} 
+  );
+};
