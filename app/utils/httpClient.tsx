@@ -1,6 +1,6 @@
 
 import axios from "axios";
-import { KLine, Ticker, marketData } from "./types";
+import { KLine, Ticker, Trade, marketData } from "./types";
 
 const API_PREFIX = "/api/v1";
 
@@ -23,6 +23,13 @@ export async function getDepth(market: string) {
 export async function getTicker(market: string) {
   const tickers = await getTickers();
   return tickers.find((t: Ticker) => t.symbol === market) ?? null;
+}
+
+export async function getTrades(market: string, limit = 30): Promise<Trade[]> {
+  const response = await api.get("/trades", {
+    params: { symbol: market, limit },
+  });
+  return Array.isArray(response.data) ? (response.data as Trade[]) : [];
 }
 
 export async function getTickers() {

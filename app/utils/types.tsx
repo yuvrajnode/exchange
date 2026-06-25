@@ -29,9 +29,18 @@ export interface KLine {
 }
 
 export interface marketData{
-    
+
   lastPrice:string,
   symbol:string,
   priceChangePercent:string
 
+}
+
+export interface Trade {
+    id: number;
+    price: string;
+    quantity: string;
+    quoteQuantity: string;
+    timestamp: number;
+    isBuyerMaker: boolean;
 }
