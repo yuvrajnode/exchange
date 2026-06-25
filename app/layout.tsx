@@ -14,8 +14,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Exchange",
-  description: "Developed by nitin walia",
+  title: "Nexus — Real-Time Crypto Exchange",
+  description:
+    "A high-performance, real-time crypto trading platform with live order books, charts and low-latency market data.",
+  keywords: ["crypto", "exchange", "trading", "order book", "real-time", "DeFi"],
+  authors: [{ name: "Yuvraj Singh" }],
+  openGraph: {
+    title: "Nexus — Real-Time Crypto Exchange",
+    description:
+      "Trade crypto with live order books, real-time charts and low-latency market data.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -24,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
