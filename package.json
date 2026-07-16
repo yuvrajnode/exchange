@@ -29,7 +29,7 @@
     "framer-motion": "^12.23.24",
     "lightweight-charts": "^5.0.9",
     "lucide-react": "^0.554.0",
-    "next": "^15.5.2",
+    "next": "15.5.9",
     "postcss": "^8.5.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
