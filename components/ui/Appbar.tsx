@@ -1,60 +1,70 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
-import { PrimaryButton, SuccessButton } from "@/components/ui/core/button";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/primitives/Button";
+import { Logo } from "@/components/ui/primitives/Logo";
+import { cn } from "@/lib/utils";
 
-export default function Appbar({ TrueButton }: { TrueButton: number }) {
-  const route = usePathname();
-  const router = useRouter();
+const NAV = [
+  { label: "Markets", href: "/market", match: "/market" },
+  { label: "Trade", href: "/trade/SOL_USDC", match: "/trade" },
+];
 
-  const linkClass = (active: boolean) =>
-    `cursor-pointer text-sm font-medium tracking-wide transition-colors ${
-      active ? "text-white" : "text-neutral-400 hover:text-white"
-    }`;
+/**
+ * Application chrome for the signed-in surfaces (markets, trade). The landing
+ * page has its own marketing nav.
+ */
+export default function Appbar({ TrueButton }: { TrueButton?: number }) {
+  const pathname = usePathname() ?? "";
+  const showActions = TrueButton === 1;
 
   return (
-    <div className="sticky top-0 z-40 mb-5 px-4 pt-4">
-      <div className="nx-glass flex items-center justify-between rounded-2xl px-5 py-3">
-        <div className="flex items-center gap-8 md:gap-12">
-          <button
-            type="button"
-            className="flex cursor-pointer items-center gap-2"
-            onClick={() => router.push("/")}
-          >
-            <Image src="/logo.svg" alt="Nexus logo" height={22} width={26} />
-            <span className="text-lg font-bold tracking-wide nx-gradient-text">
-              NEXUS
-            </span>
-          </button>
+    <header className="sticky top-0 z-40 border-b border-[var(--nx-border)] bg-[var(--nx-bg)]/85 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-8 px-4">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 rounded-[var(--nx-radius-sm)]"
+          aria-label="Nexus home"
+        >
+          <Logo className="h-6 w-6" />
+          <span className="text-[15px] font-semibold tracking-tight text-[var(--nx-text)]">
+            Nexus
+          </span>
+        </Link>
 
-          <button
-            type="button"
-            className={linkClass(route.startsWith("/market"))}
-            onClick={() => router.push("/market")}
-          >
-            Markets
-          </button>
-          <button
-            type="button"
-            className={linkClass(route.startsWith("/trade"))}
-            onClick={() => router.push("/trade/SOL_USDC")}
-          >
-            Trade
-          </button>
-        </div>
+        <nav className="flex items-center gap-1">
+          {NAV.map((item) => {
+            const active = pathname.startsWith(item.match);
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "rounded-[var(--nx-radius-sm)] px-3 py-1.5 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-[var(--nx-surface-hover)] text-[var(--nx-text)]"
+                    : "text-[var(--nx-text-secondary)] hover:text-[var(--nx-text)]"
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
 
-        {TrueButton === 1 ? <ActionButtons /> : null}
+        {showActions && (
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="ghost" size="sm" disabled title="Demo build — no wallet connected">
+              Deposit
+            </Button>
+            <Button variant="secondary" size="sm" disabled title="Demo build — no wallet connected">
+              Withdraw
+            </Button>
+          </div>
+        )}
       </div>
-    </div>
-  );
-}
-
-function ActionButtons() {
-  return (
-    <div className="flex items-center gap-2">
-      <SuccessButton>Deposit</SuccessButton>
-      <PrimaryButton>Withdraw</PrimaryButton>
-    </div>
+    </header>
   );
 }
