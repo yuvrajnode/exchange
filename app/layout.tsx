@@ -1,24 +1,29 @@
-import type { Metadata } from "next";
-import {  Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Nexus — Real-Time Crypto Exchange",
+  title: {
+    default: "Nexus — Real-Time Crypto Exchange",
+    template: "%s · Nexus",
+  },
   description:
-    "A high-performance, real-time crypto trading platform with live order books, charts and low-latency market data.",
+    "A high-performance crypto trading terminal with live order books, streaming candlestick charts and low-latency market data.",
   keywords: ["crypto", "exchange", "trading", "order book", "real-time", "DeFi"],
   authors: [{ name: "Yuvraj Singh" }],
+  icons: { icon: "/logo.svg" },
   openGraph: {
     title: "Nexus — Real-Time Crypto Exchange",
     description:
@@ -27,15 +32,18 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#0a0c10",
+  colorScheme: "dark",
+};
+
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
         {children}
       </body>
