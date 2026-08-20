@@ -21,7 +21,7 @@ export default function Appbar({ TrueButton }: { TrueButton?: number }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--nx-border)] bg-[var(--nx-bg)]/85 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-8 px-4">
+      <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-4 px-4 sm:gap-8">
         <Link
           href="/"
           className="flex items-center gap-2.5 rounded-[var(--nx-radius-sm)]"
@@ -55,7 +55,9 @@ export default function Appbar({ TrueButton }: { TrueButton?: number }) {
         </nav>
 
         {showActions && (
-          <div className="ml-auto flex items-center gap-2">
+          // Hidden on the narrowest screens: the trade view needs its width
+          // for the market bar, and neither button does anything in a demo.
+          <div className="ml-auto hidden items-center gap-2 sm:flex">
             <Button variant="ghost" size="sm" disabled title="Demo build — no wallet connected">
               Deposit
             </Button>
