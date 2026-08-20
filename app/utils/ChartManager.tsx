@@ -49,31 +49,37 @@ export class ChartManager {
         visible: true,
         ticksVisible: true,
         entireTextOnly: true,
+        borderColor: "#1e252f",
       },
+      // Faint gridlines give the eye a price/time reference without
+      // competing with the candles.
       grid: {
-        horzLines: {
-          visible: false,
-        },
-        vertLines: {
-          visible: false,
-        },
+        horzLines: { color: "rgba(148, 157, 172, 0.07)" },
+        vertLines: { color: "rgba(148, 157, 172, 0.05)" },
+      },
+      timeScale: {
+        borderColor: "#1e252f",
+        timeVisible: true,
       },
       layout: {
         background: {
           type: ColorType.Solid,
           color: layout.background,
         },
-        textColor: "white",
+        textColor: layout.color,
+        fontFamily:
+          "var(--font-geist-mono), ui-monospace, SF Mono, monospace",
+        attributionLogo: false,
       },
     });
     this.chart = chart;
 
     const seriesOptions: CandlestickSeriesPartialOptions = {
-      upColor: "#02c176",
-      downColor: "#ff4747",
+      upColor: "#26c08a",
+      downColor: "#f0546b",
       borderVisible: false,
-      wickUpColor: "#02c176",
-      wickDownColor: "#ef5350",
+      wickUpColor: "#26c08a",
+      wickDownColor: "#f0546b",
     };
 
     // lightweight-charts v5 uses addSeries instead of addCandlestickSeries.
@@ -90,6 +96,8 @@ export class ChartManager {
         time: (data.timestamp / 1000) as UTCTimestamp,
       }))
     );
+
+    chart.timeScale().fitContent();
   }
 
 
