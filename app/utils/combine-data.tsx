@@ -1,34 +1,41 @@
-"use server";
-
-import { CryptoData, LineCryptoData , LineCryptoDataPoint } from "../market/page";
+import type { CoinInfo, LineCryptoDataPoint } from "./types";
 import { getAllInfo, getMarketKlines } from "./httpClient";
 
-export type CombinedCryptoData = CryptoData & { KlineData?: LineCryptoDataPoint[] };
+export type CombinedCryptoData = CoinInfo & {
+  KlineData?: LineCryptoDataPoint[];
+};
 
-export async function CombineData() {
-  try {
-    const allData: CryptoData[] = await getAllInfo();
-    if(!allData) {
-        throw new Error('Token data not found');
-    }
-    const marketData: LineCryptoData[] = await getMarketKlines(
-      Math.floor((new Date().getTime() - 1000 * 60 * 60 * 24 * 7) / 1000),
-      Math.floor(new Date().getTime() / 1000)
-    );
-    if(!marketData) {
-        throw new Error('Klines Data not found');
-    }
-    const combinedData: CombinedCryptoData[] = allData.map((data) => {
-        const matchingMarketData = marketData.find((market) => market.symbol.replace('_USDC', '').toLowerCase() === data.symbol);
-        return {
-            ...data,
-            KlineData: matchingMarketData?.data,
-        };
-    });
+const SEVEN_DAYS_MS = 1000 * 60 * 60 * 24 * 7;
 
-      return combinedData;
+/**
+ * Joins coin metadata with its 7-day price series. The two upstreams are
+ * independent, so a sparkline outage still leaves a usable markets table.
+ */
+export async function CombineData(): Promise<CombinedCryptoData[]> {
+  const now = Date.now();
 
-        } catch (error) {
-    console.error("Error fetching data:", error);
+  const [coinsResult, klinesResult] = await Promise.allSettled([
+    getAllInfo(),
+    getMarketKlines(
+      Math.floor((now - SEVEN_DAYS_MS) / 1000),
+      Math.floor(now / 1000)
+    ),
+  ]);
+
+  if (coinsResult.status === "rejected") {
+    throw coinsResult.reason;
   }
+
+  const klines = klinesResult.status === "fulfilled" ? klinesResult.value : [];
+  const seriesBySymbol = new Map(
+    klines.map((market) => [
+      market.symbol.replace("_USDC", "").toLowerCase(),
+      market.data,
+    ])
+  );
+
+  return coinsResult.value.map((coin) => ({
+    ...coin,
+    KlineData: seriesBySymbol.get(coin.symbol.toLowerCase()),
+  }));
 }

@@ -8,3 +8,9 @@ node_modules
 # env
 .env
 .env.local
+
+# typescript
+*.tsbuildinfo
+
+# local editor/tooling
+.claude/

@@ -1,6 +1,7 @@
+import { BACKPACK_WS_URL } from "@/lib/config";
 import { Ticker } from "./types";
 
-export const BASE_URL = "wss://ws.backpack.exchange/"
+export const BASE_URL = BACKPACK_WS_URL;
 
 export interface MessageType {
     method?: string;
@@ -45,8 +46,15 @@ export class SignalingManager {
             this.bufferedMessages = [];
         }
         this.ws.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            const type = message.data.e;
+            let message;
+            try {
+                message = JSON.parse(event.data);
+            } catch {
+                return;
+            }
+            // Subscribe acks and error frames carry no `data` payload.
+            const type = message?.data?.e;
+            if (!type) return;
             if (this.callbacks[type]) {
                 this.callbacks[type].forEach(({ callback }) => {
                     if (type === "ticker") {
