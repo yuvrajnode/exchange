@@ -17,7 +17,7 @@ export function PriceChart({ market }: { market: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ChartManager | null>(null);
   const [interval, setInterval] = useState<string>("1h");
-  const [error, setError] = useState(false);
+  const [status, setStatus] = useState<"ok" | "empty" | "error">("ok");
 
   useEffect(() => {
     let cancelled = false;
@@ -29,7 +29,16 @@ export function PriceChart({ market }: { market: string }) {
     getKlines({ market, interval, startTime })
       .then((klines) => {
         if (cancelled || !containerRef.current) return;
-        setError(false);
+
+        // An unknown symbol returns 200 with an empty series rather than an
+        // error, which would otherwise render as a silently blank pane.
+        if (klines.length === 0) {
+          chartRef.current?.destroy();
+          chartRef.current = null;
+          setStatus("empty");
+          return;
+        }
+        setStatus("ok");
 
         chartRef.current?.destroy();
         chartRef.current = new ChartManager(
@@ -47,7 +56,7 @@ export function PriceChart({ market }: { market: string }) {
         );
       })
       .catch(() => {
-        if (!cancelled) setError(true);
+        if (!cancelled) setStatus("error");
       });
 
     return () => {
@@ -80,9 +89,11 @@ export function PriceChart({ market }: { market: string }) {
       </div>
 
       <div className="relative min-h-0 flex-1">
-        {error && (
-          <p className="absolute inset-0 z-10 flex items-center justify-center text-sm text-[var(--nx-text-secondary)]">
-            Chart data unavailable.
+        {status !== "ok" && (
+          <p className="absolute inset-0 z-10 flex items-center justify-center px-4 text-center text-sm text-[var(--nx-text-secondary)]">
+            {status === "empty"
+              ? `No price history for ${market.replace("_", "/")}.`
+              : "Chart data unavailable."}
           </p>
         )}
         {/* Fills the grid cell rather than a hard-coded 520px. */}
