@@ -10,15 +10,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/api/tickers", // When calling this path in your frontend
-        destination: "https://api.backpack.exchange/api/v1/tickers", // It will proxy the request to this API
-      },
-    ];
-  },
-  reactStrictMode: false, // Disable strict mode to prevent double rendering
+  // Was disabled with the note "prevent double rendering". The effects it was
+  // hiding — leaked socket subscriptions and un-cancelled fetches — are fixed,
+  // so the extra dev-only invocation is now a useful check rather than a
+  // source of bugs.
+  reactStrictMode: true,
 };
 
 export default nextConfig;

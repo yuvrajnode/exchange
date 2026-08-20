@@ -26,5 +26,8 @@ jobs:
       - name: Lint Project
         run: npm run lint
 
+      - name: Typecheck Project
+        run: npm run typecheck
+
       - name: Build Project
         run: npm run build
