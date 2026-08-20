@@ -1,25 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { getTrades } from "@/app/utils/httpClient";
-import type { Trade } from "@/app/utils/types";
+import { usePolling } from "@/app/utils/usePolling";
 
 export function RecentTrades({ market }: { market: string }) {
-  const [trades, setTrades] = useState<Trade[]>([]);
-
-  useEffect(() => {
-    let active = true;
-    const load = () =>
-      getTrades(market, 30)
-        .then((t) => active && setTrades(t.slice().reverse()))
-        .catch(() => {});
-    load();
-    const id = setInterval(load, 4000);
-    return () => {
-      active = false;
-      clearInterval(id);
-    };
-  }, [market]);
+  const load = useCallback(
+    () => getTrades(market, 30).then((t) => t.slice().reverse()),
+    [market]
+  );
+  const { data, error, loading } = usePolling(load, 4000, [market]);
+  const trades = data ?? [];
 
   return (
     <div className="flex h-full flex-col">
@@ -31,8 +22,12 @@ export function RecentTrades({ market }: { market: string }) {
       </div>
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {trades.length === 0 ? (
-          <div className="py-6 text-center text-xs text-neutral-600">
-            Loading trades…
+          <div className="py-6 text-center text-xs text-neutral-500">
+            {loading
+              ? "Loading trades…"
+              : error
+                ? "Trade feed unavailable — retrying…"
+                : "No recent trades."}
           </div>
         ) : (
           trades.map((t) => {

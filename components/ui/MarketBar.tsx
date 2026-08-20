@@ -1,155 +1,215 @@
-
-
 "use client";
+
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import type { Ticker } from "../../app/utils/types";
-import { getTicker } from "../../app/utils/httpClient";
+import { getAllInfo, getTicker } from "../../app/utils/httpClient";
 import { SignalingManager } from "../../app/utils/SignalingManager";
-import  Image  from "next/image";
+import { formatCompact, formatPrice, formatSignedPercent } from "@/lib/format";
 
-import { getAllInfo } from "../../app/utils/httpClient";
+export const MarketBar = ({ market }: { market: string }) => {
+  const [ticker, setTicker] = useState<Ticker | null>(null);
+  const [tokenImage, setTokenImage] = useState<string | null>(null);
+  const [quoteImage, setQuoteImage] = useState<string | null>(null);
 
-interface CoinData {
-  symbol: string;
-  image: string;
-}
+  const [base, quote] = market.split("_");
 
-export const MarketBar = ({market}: {market: string}) => {
-    const [ticker, setTicker] = useState<Ticker | null>(null);
-    // const [data, setdata]=useState<CryptoData[]>([]);
-     const [tokenImage, settokenImage] = useState<string | null>(null);
-     const[usdcImage,setimage]=useState<string | null >(null);
   useEffect(() => {
-    //fetch the Image from getAllInfo
-    async function fetchImage() {
-      try {
-        const data: CoinData[] = await getAllInfo();
-        const image = data.find(
-          (d: CoinData) =>
-            d.symbol.toLowerCase() === market.split("_")[0].toLowerCase()
-        )?.image;
-        settokenImage(image || null);
-        setimage(
-          data.find((d: CoinData) => d.symbol.toLowerCase() === "usdc")?.image ||
-            null
-        );
-      } catch (error) {
+    let active = true;
+
+    getAllInfo()
+      .then((coins) => {
+        if (!active) return;
+        const bySymbol = (symbol: string) =>
+          coins.find((c) => c.symbol.toLowerCase() === symbol.toLowerCase())
+            ?.image ?? null;
+        setTokenImage(bySymbol(base));
+        setQuoteImage(bySymbol(quote ?? "usdc"));
+      })
+      .catch((error) => {
         console.error("Failed to fetch token images:", error);
-      }
-    }
-    fetchImage();
-  }, [market]);
-
-
-    useEffect(() => {
-        let cancelled = false;
-        const subscriptionKey = `TICKER-${market}`;
-        getTicker(market)
-          .then((result) => {
-            if (!cancelled && result) {
-              setTicker(result);
-            }
-          })
-          .catch((error) => {
-            console.error("Failed to fetch ticker snapshot:", error);
-          });
-        SignalingManager.getInstance().registerCallback("ticker",(data: unknown)=>{
-
-            const tickerData = data as Ticker;
-            setTicker((prevTicker) => ({
-                firstPrice: tickerData?.firstPrice ?? prevTicker?.firstPrice ?? '',
-                high: tickerData?.high ?? prevTicker?.high ?? '',
-                lastPrice: tickerData?.lastPrice ?? prevTicker?.lastPrice ?? '',
-                low: tickerData?.low ?? prevTicker?.low ?? '',
-                priceChange: tickerData?.priceChange ?? prevTicker?.priceChange ?? '',
-                priceChangePercent: tickerData?.priceChangePercent ?? prevTicker?.priceChangePercent ?? '',
-                quoteVolume: tickerData?.quoteVolume ?? prevTicker?.quoteVolume ?? '',
-                symbol: tickerData?.symbol ?? prevTicker?.symbol ?? '',
-                trades: tickerData?.trades ?? prevTicker?.trades ?? '',
-                volume: tickerData?.volume ?? prevTicker?.volume ?? '',
-            }))
-        },subscriptionKey)
-
-    SignalingManager.getInstance().sendMessage({"method":"SUBSCRIBE","params":[`ticker.${market}`]});
+      });
 
     return () => {
-        cancelled = true;
-        SignalingManager.getInstance().sendMessage({"method":"UNSUBSCRIBE","params":[`ticker.${market}`]});
-        SignalingManager.getInstance().deRegisterCallback("ticker",subscriptionKey);
-    }
-        
-    }, [market])
+      active = false;
+    };
+  }, [base, quote]);
 
-    
-    // 
+  useEffect(() => {
+    let cancelled = false;
+    const subscriptionKey = `TICKER-${market}`;
 
-    return <div>
-        <div className="flex items-center  flex-row relative w-full overflow-hidden h-full border-slate-800">
-            <div className="flex items-center justify-between flex-row no-scrollbar overflow-auto pr-4">
-                    <Ticker market={market} TokenImage={tokenImage ?? ""} image={usdcImage ?? ""}/>
-                    <div className="flex items-center flex-row space-x-8 pl-4">
-                        <div className="flex flex-col h-full justify-center">
-                            <p className={`font-semibold tabular-nums text-lg ${Number(ticker?.priceChange) >= 0 ? "text-green-500" : "text-red-500"}`}>${ticker?.lastPrice}</p>
-                            <p className="font-medium text-xs text-slate-400 tabular-nums">Last price</p>
-                        </div>
-                        <div className="flex flex-col">
-                            <p className={`font-medium text-xs text-slate-400`}>24H Change</p>
-                            <p className={`  font-medium tabular-nums leading-5  text-greenText ${Number(ticker?.priceChange) > 0 ? "text-green-500" : "text-red-500"}`}>{Number(ticker?.priceChange) > 0 ? "+" : ""} {ticker?.priceChange} {Number(ticker?.priceChangePercent)?.toFixed(2)}%</p></div><div className="flex flex-col">
-                                <p className="font-medium text-xs text-slate-400 ">24H High</p>
-                                <p className=" font-medium tabular-nums leading-5  ">{ticker?.high}</p>
-                                </div>
-                                <div className="flex flex-col">
-                                    <p className="font-medium text-xs text-slate-400 ">24H Low</p>
-                                    <p className=" font-medium tabular-nums leading-5 ">{ticker?.low}</p>
-                                </div>
-                            <button type="button" className="font-medium transition-opacity hover:opacity-80 hover:cursor-pointer text-base text-left" data-rac="">
-                                <div className="flex flex-col">
-                                    <p className="font-medium text-xs text-slate-400 ">24H Volume</p>
-                                    <p className="mt-1  font-medium tabular-nums leading-5  ">{ticker?.volume}
-                                </p>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    getTicker(market)
+      .then((result) => {
+        if (!cancelled && result) setTicker(result);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch ticker snapshot:", error);
+      });
 
-}
+    SignalingManager.getInstance().registerCallback(
+      "ticker",
+      (data: unknown) => {
+        const update = data as Partial<Ticker>;
+        setTicker((prev) => ({
+          firstPrice: update.firstPrice ?? prev?.firstPrice ?? "",
+          high: update.high ?? prev?.high ?? "",
+          lastPrice: update.lastPrice ?? prev?.lastPrice ?? "",
+          low: update.low ?? prev?.low ?? "",
+          priceChange: update.priceChange ?? prev?.priceChange ?? "",
+          priceChangePercent:
+            update.priceChangePercent ?? prev?.priceChangePercent ?? "",
+          quoteVolume: update.quoteVolume ?? prev?.quoteVolume ?? "",
+          symbol: update.symbol ?? prev?.symbol ?? market,
+          trades: update.trades ?? prev?.trades ?? "",
+          volume: update.volume ?? prev?.volume ?? "",
+        }));
+      },
+      subscriptionKey
+    );
 
-function Ticker({market,TokenImage, image}: {market: string,TokenImage:string,image:string}) {
-    return <div className="flex h-[60px] shrink-0 space-x-4">
-        <div className="flex flex-row relative ml-2 -mr-4">
-             <Image
-          src={market === "TATA_INR" ? "/TATA.png" : TokenImage || "/sol copy.webp"}
-          alt="Market Logo"
-          loading="lazy"
-          decoding="async"
-          data-nimg="1"
-          width={30}
-          height={30}
-          className="z-10 rounded-full h-6 w-6 mt-4 outline-baseBackgroundL1"
-        />
-              <Image
-          src={image}
-          alt="Market Logo"
-          loading="lazy"
-          decoding="async"
-          data-nimg="1"
-          width={30}
-          height={30}
-          className="z-2 rounded-full h-6 w-6 mt-4 outline-baseBackgroundL1"
-        />
-           
-        </div>
-    <button type="button" className="react-aria-Button" data-rac="">
-        <div className="flex items-center justify-between flex-row cursor-pointer rounded-lg p-3 hover:opacity-80">
-            <div className="flex items-center flex-row gap-2 undefined">
-                <div className="flex flex-row relative">
-                    <p className="font-medium text-sm undefined">{market.replace("_", " / ")}</p>
-                </div>
-            </div>
-        </div>
-    </button>
+    SignalingManager.getInstance().sendMessage({
+      method: "SUBSCRIBE",
+      params: [`ticker.${market}`],
+    });
+
+    return () => {
+      cancelled = true;
+      SignalingManager.getInstance().sendMessage({
+        method: "UNSUBSCRIBE",
+        params: [`ticker.${market}`],
+      });
+      SignalingManager.getInstance().deRegisterCallback(
+        "ticker",
+        subscriptionKey
+      );
+    };
+  }, [market]);
+
+  const change = Number(ticker?.priceChange);
+  const up = Number.isFinite(change) && change >= 0;
+
+  return (
+    <div className="flex w-full items-center gap-6 overflow-x-auto no-scrollbar">
+      <MarketIdentity
+        market={market}
+        baseImage={tokenImage}
+        quoteImage={quoteImage}
+      />
+
+      <Stat
+        label="Last price"
+        value={ticker ? formatPrice(ticker.lastPrice) : null}
+        tone={up ? "up" : "down"}
+        emphasis
+      />
+      <Stat
+        label="24h Change"
+        value={
+          ticker
+            ? `${up ? "+" : ""}${ticker.priceChange} (${formatSignedPercent(
+                // The API sends a fraction — 0.0699 means +6.99%.
+                Number(ticker.priceChangePercent) * 100
+              )})`
+            : null
+        }
+        tone={up ? "up" : "down"}
+      />
+      <Stat label="24h High" value={ticker ? formatPrice(ticker.high) : null} />
+      <Stat label="24h Low" value={ticker ? formatPrice(ticker.low) : null} />
+      <Stat
+        label="24h Volume"
+        value={ticker ? formatCompact(Number(ticker.volume)) : null}
+      />
     </div>
+  );
+};
+
+function Stat({
+  label,
+  value,
+  tone,
+  emphasis,
+}: {
+  label: string;
+  value: string | null;
+  tone?: "up" | "down";
+  emphasis?: boolean;
+}) {
+  const toneClass =
+    tone === "up" ? "text-nx-up" : tone === "down" ? "text-nx-down" : "text-white";
+
+  return (
+    <div className="flex shrink-0 flex-col justify-center">
+      <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-500">
+        {label}
+      </span>
+      {value === null ? (
+        <span className="mt-1 block h-4 w-20 animate-pulse rounded bg-white/10" />
+      ) : (
+        <span
+          className={`tabular-nums ${
+            emphasis ? "text-lg font-semibold" : "text-sm font-medium"
+          } ${toneClass}`}
+        >
+          {value}
+        </span>
+      )}
+    </div>
+  );
 }
 
+function MarketIdentity({
+  market,
+  baseImage,
+  quoteImage,
+}: {
+  market: string;
+  baseImage: string | null;
+  quoteImage: string | null;
+}) {
+  const [base, quote] = market.split("_");
+
+  return (
+    <div className="flex shrink-0 items-center gap-3 pr-2">
+      <div className="flex items-center">
+        <CoinAvatar src={baseImage} symbol={base} />
+        <CoinAvatar src={quoteImage} symbol={quote} className="-ml-2" />
+      </div>
+      <span className="text-base font-semibold text-white">
+        {base} <span className="text-neutral-500">/</span> {quote}
+      </span>
+    </div>
+  );
+}
+
+/** next/image throws on an empty src, so an initial-letter chip stands in. */
+function CoinAvatar({
+  src,
+  symbol,
+  className = "",
+}: {
+  src: string | null;
+  symbol?: string;
+  className?: string;
+}) {
+  if (!src) {
+    return (
+      <span
+        className={`flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-[10px] font-semibold text-neutral-300 ring-2 ring-[var(--nx-bg)] ${className}`}
+      >
+        {symbol?.[0] ?? "?"}
+      </span>
+    );
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={symbol ?? "market"}
+      width={28}
+      height={28}
+      className={`h-7 w-7 rounded-full ring-2 ring-[var(--nx-bg)] ${className}`}
+    />
+  );
+}
