@@ -18,70 +18,25 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { CombineData, CombinedCryptoData } from "../utils/combine-data";
+import type { CoinInfo as CryptoData, LineCryptoDataPoint } from "../utils/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Appbar from "@/components/ui/Appbar";
 
 
-export interface CurrencyData {
-  price: number;
-  market_cap: number;
-  price_change_percentage_24hr: number;
-  volume: number;
-}
+export type { CoinInfo as CryptoData, LineCryptoData, LineCryptoDataPoint } from "../utils/types";
 
-export interface CryptoData {
-  id: string;
-  symbol: string;
-  name: string;
-  image: string;
-  current_price: number;
-  market_cap: number;
-  market_cap_rank: number;
-  fully_diluted_valuation: number;
-  total_volume: number;
-  high_24h: number;
-  low_24h: number;
-  price_change_24h: number;
-  price_change_percentage_24h: number;
-  market_cap_change_24h: number;
-  market_cap_change_percentage_24h: number;
-  circulating_supply: number;
-  total_supply: number;
-  max_supply: number;
-  ath: number;
-  ath_change_percentage: number;
-  ath_date: string; // Use Date if you parse it as a Date object
-  atl: number;
-  atl_change_percentage: number;
-  atl_date: string; // Use Date if you parse it as a Date object
-  roi: null | number;
-  last_updated: string; // Use Date if you parse it as a Date object
-  price_change_percentage_24h_in_currency: number;
-  currencies: {
-    cad: CurrencyData;
-    cny: CurrencyData;
-    eur: CurrencyData;
-    gbp: CurrencyData;
-    jpy: CurrencyData;
-    usd: CurrencyData;
-  };
-}
-
-export interface LineCryptoDataPoint {
-  close: string;
-  end: string; //THIS IS TIME
-}
-
-export interface LineCryptoData {
-  data: LineCryptoDataPoint[];
-  symbol: string;
-}
+/**
+ * Each row renders its own lightweight-charts sparkline, so the full ~100-coin
+ * list previously mounted 100+ canvases at once and locked up the page.
+ */
+const PAGE_SIZE = 15;
 
 export default function Component() {
   const [data, setData] = useState<CombinedCryptoData[] | null>(null);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"spot" | "favorites">("spot");
+  const [page, setPage] = useState(1);
   const [favorites, setFavorites] = useState<string[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -105,6 +60,44 @@ export default function Component() {
     });
   }, []);
 
+  const filteredRows = useMemo(() => {
+    if (!data) return [];
+    const query = search.trim().toLowerCase();
+
+    return data
+      .slice()
+      .sort((a, b) => b.market_cap - a.market_cap)
+      .filter((item) => !item.symbol.toLowerCase().includes("usdc"))
+      .filter((item) =>
+        query
+          ? item.name.toLowerCase().includes(query) ||
+            item.symbol.toLowerCase().includes(query)
+          : true
+      )
+      .filter((item) =>
+        tab === "favorites"
+          ? favorites.includes(item.symbol.toUpperCase())
+          : true
+      );
+  }, [data, search, tab, favorites]);
+
+  // Changing a filter invalidates the current page, so reset alongside it.
+  const applySearch = useCallback((value: string) => {
+    setSearch(value);
+    setPage(1);
+  }, []);
+
+  const applyTab = useCallback((value: "spot" | "favorites") => {
+    setTab(value);
+    setPage(1);
+  }, []);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = filteredRows.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -336,7 +329,7 @@ const number=0;
                   <button
                     key={t}
                     type="button"
-                    onClick={() => setTab(t)}
+                    onClick={() => applyTab(t)}
                     className={`rounded-lg px-4 py-1.5 text-sm font-medium capitalize transition-all ${
                       tab === t
                         ? "bg-white/10 text-white shadow-[0_0_18px_-8px_rgba(120,160,255,0.8)]"
@@ -351,19 +344,49 @@ const number=0;
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
                 <input
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => applySearch(e.target.value)}
                   placeholder="Search markets…"
                   className="h-10 w-full rounded-xl border border-white/10 bg-black/30 pl-9 pr-3 text-sm text-white outline-none transition focus:border-cyan-400/60"
                 />
               </div>
             </div>
           <CryptoTable
-            data={data}
-            search={search}
+            rows={pageRows}
             tab={tab}
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
           />
+
+          {totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between text-sm text-neutral-400">
+              <span>
+                Showing {(currentPage - 1) * PAGE_SIZE + 1}–
+                {Math.min(currentPage * PAGE_SIZE, filteredRows.length)} of{" "}
+                {filteredRows.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:bg-white/5 disabled:opacity-40 disabled:hover:bg-transparent"
+                >
+                  Previous
+                </button>
+                <span className="tabular-nums">
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:bg-white/5 disabled:opacity-40 disabled:hover:bg-transparent"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -472,35 +495,16 @@ interface CryptoTableRowProps {
 }
 
 function CryptoTable({
-  data,
-  search,
+  rows,
   tab,
   favorites,
   onToggleFavorite,
 }: {
-  data: CombinedCryptoData[] | null;
-  search: string;
+  rows: CombinedCryptoData[];
   tab: "spot" | "favorites";
   favorites: string[];
   onToggleFavorite: (symbol: string) => void;
 }) {
-  if (!data) return null;
-
-  const query = search.trim().toLowerCase();
-  const rows = data
-    .slice()
-    .sort((a, b) => b.market_cap - a.market_cap)
-    .filter((item) => !item.symbol.toLowerCase().includes("usdc"))
-    .filter((item) =>
-      query
-        ? item.name.toLowerCase().includes(query) ||
-          item.symbol.toLowerCase().includes(query)
-        : true
-    )
-    .filter((item) =>
-      tab === "favorites" ? favorites.includes(item.symbol.toUpperCase()) : true
-    );
-
   return (
     <table className="w-full">
       <thead>

@@ -1,23 +1,19 @@
 import { NextResponse } from "next/server";
+import { BACKPACK_API_URL } from "@/lib/config";
+import { proxyJson } from "@/lib/upstream";
 
 export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const symbol = searchParams.get("symbol");
-    const limit = searchParams.get("limit") ?? "30";
+  const { searchParams } = new URL(request.url);
+  const symbol = searchParams.get("symbol");
+  const limit = searchParams.get("limit") ?? "30";
 
-    const response = await fetch(
-      `https://api.backpack.exchange/api/v1/trades?symbol=${symbol}&limit=${limit}`,
-      { headers: { Accept: "application/json" } }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+  if (!symbol) {
+    return NextResponse.json({ error: "Missing 'symbol'" }, { status: 400 });
   }
+
+  return proxyJson(
+    `${BACKPACK_API_URL}/api/v1/trades?symbol=${encodeURIComponent(
+      symbol
+    )}&limit=${encodeURIComponent(limit)}`
+  );
 }

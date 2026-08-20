@@ -175,6 +175,12 @@ body {
 }
 
 @theme inline {
+  /* Market direction — one source of truth for green/red across the app. */
+  --color-nx-up: var(--nx-green);
+  --color-nx-down: var(--nx-red);
+  --color-nx-cyan: var(--nx-cyan);
+  --color-nx-violet: var(--nx-violet);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

@@ -1,28 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { BACKPACK_API_URL } from "@/lib/config";
+import { proxyJson } from "@/lib/upstream";
 
 export async function GET(request: Request) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const symbol = searchParams.get('symbol'); // Default to ETH_USDC if no symbol provided
+  const symbol = new URL(request.url).searchParams.get("symbol");
 
-        const response = await fetch(`https://api.backpack.exchange/api/v1/depth?symbol=${symbol}`, {
-            headers: {
-                'Accept': 'application/json',
-            },
-        });
+  if (!symbol) {
+    return NextResponse.json({ error: "Missing 'symbol'" }, { status: 400 });
+  }
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        return NextResponse.json(data);
-
-    } catch (error) {
-        return NextResponse.json(
-            { error: error },
-            { status: 500 }
-        );
-    }
+  return proxyJson(
+    `${BACKPACK_API_URL}/api/v1/depth?symbol=${encodeURIComponent(symbol)}`
+  );
 }

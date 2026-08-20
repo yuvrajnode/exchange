@@ -69,7 +69,7 @@ export function Depth({market }:{market:string}){
           });
 
             return ()=>{
-                 SignalingManager.getInstance().sendMessage({"method":"UNSUBSCRIBE" ,"params":[`depth.200ms.${market}`]});
+                 SignalingManager.getInstance().sendMessage({"method":"UNSUBSCRIBE" ,"params":[`depth.${market}`]});
                  SignalingManager.getInstance().deRegisterCallback("depth", `DEPTH-${market}`);
             }
         },[market]);
