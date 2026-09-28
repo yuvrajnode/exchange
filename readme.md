@@ -7,8 +7,17 @@ streams live market data over a single multiplexed WebSocket, renders
 candlestick charts and a real order book, and proxies every upstream call
 through its own route handlers.
 
+![Nexus trading terminal: candlestick chart, live order book, order form and recent trades](docs/trade.png)
+
 > Front-end only. There is no wallet and no matching engine behind it —
 > balances in the order form are simulated and no order is ever sent anywhere.
+
+<details>
+<summary>Landing page</summary>
+
+![Nexus landing page with live SOL/USDC preview](docs/home.png)
+
+</details>
 
 ---
 
