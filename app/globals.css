@@ -36,6 +36,9 @@
   --nx-up-soft: rgba(38, 192, 138, 0.14);
   --nx-down: #f0546b;
   --nx-down-soft: rgba(240, 84, 107, 0.14);
+  /* Start colour of a tick flash; it fades out from here. */
+  --nx-up-flash: rgba(38, 192, 138, 0.32);
+  --nx-down-flash: rgba(240, 84, 107, 0.32);
   --nx-warn: #e8b339;
 
   --nx-radius-sm: 6px;
@@ -177,6 +180,36 @@
     background-size: 32px 32px;
   }
 
+  /*
+    Motion. Every animation here reports a change in the data: a price that
+    ticked, a level that resized, a trade that printed. Nothing loops for
+    decoration. The reduced-motion rule in the base layer collapses them all.
+  */
+  .nx-flash-up {
+    animation: nx-flash-up 900ms ease-out;
+  }
+  .nx-flash-down {
+    animation: nx-flash-down 900ms ease-out;
+  }
+  .nx-enter {
+    animation: nx-enter 220ms ease-out backwards;
+  }
+  .nx-trade-in-up {
+    animation:
+      nx-enter 260ms ease-out backwards,
+      nx-flash-up 1200ms ease-out;
+  }
+  .nx-trade-in-down {
+    animation:
+      nx-enter 260ms ease-out backwards,
+      nx-flash-down 1200ms ease-out;
+  }
+  /* Panels settling in on first paint. `backwards` rather than `both`, so
+     no transform lingers to trap the market picker's dropdown. */
+  .nx-rise {
+    animation: nx-rise 480ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -203,6 +236,30 @@
   }
   .nx-scroll::-webkit-scrollbar-thumb:hover {
     background: var(--nx-text-tertiary);
+  }
+}
+
+/* Single-keyframe animations ease back to the element's own styles. */
+@keyframes nx-flash-up {
+  from {
+    background-color: var(--nx-up-flash);
+  }
+}
+@keyframes nx-flash-down {
+  from {
+    background-color: var(--nx-down-flash);
+  }
+}
+@keyframes nx-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes nx-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 }
 

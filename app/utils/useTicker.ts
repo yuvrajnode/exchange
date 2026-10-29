@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getTicker } from "./httpClient";
 import { SignalingManager } from "./SignalingManager";
+import { tickerFromFrame, type TickerFrame } from "./ticker";
 import type { Ticker } from "./types";
 
 /**
@@ -23,8 +24,6 @@ export function useTicker(market: string): Ticker | null {
 
   useEffect(() => {
     let active = true;
-    const key = `TICKER-${market}`;
-    const manager = SignalingManager.getInstance();
 
     getTicker(market)
       .then((result) => {
@@ -32,37 +31,22 @@ export function useTicker(market: string): Ticker | null {
       })
       .catch(() => {});
 
-    manager.registerCallback(
-      "ticker",
-      (data: unknown) => {
+    const unsubscribe = SignalingManager.getInstance().subscribe(
+      `ticker.${market}`,
+      (data) => {
         if (!active) return;
-        const update = data as Partial<Ticker>;
         // Stream frames carry only the fields that changed, so merge rather
         // than replace or the untouched stats blank out.
-        setTicker((prev) =>
-          prev ? { ...prev, ...stripUndefined(update) } : null
-        );
-      },
-      key
+        const update = tickerFromFrame(data as TickerFrame);
+        setTicker((prev) => (prev ? { ...prev, ...update } : null));
+      }
     );
-
-    manager.sendMessage({ method: "SUBSCRIBE", params: [`ticker.${market}`] });
 
     return () => {
       active = false;
-      manager.sendMessage({
-        method: "UNSUBSCRIBE",
-        params: [`ticker.${market}`],
-      });
-      manager.deRegisterCallback("ticker", key);
+      unsubscribe();
     };
   }, [market]);
 
   return ticker;
-}
-
-function stripUndefined(update: Partial<Ticker>): Partial<Ticker> {
-  return Object.fromEntries(
-    Object.entries(update).filter(([, value]) => value !== undefined)
-  );
 }

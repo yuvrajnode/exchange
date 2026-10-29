@@ -2,12 +2,17 @@
 
 import { useMemo } from "react";
 import { useOrderBook, type Level } from "@/app/utils/useOrderBook";
+import { useTick } from "@/app/utils/useTick";
+import { LiveIndicator } from "@/components/ui/primitives/LiveIndicator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatNumber } from "@/lib/format";
+import { digitsFor, formatNumber } from "@/lib/format";
 
 const ROWS = 12;
 
 type Row = { price: string; size: string; total: number };
+
+/** One precision per column, so every row lines up on the decimal point. */
+type Digits = { price: number; size: number };
 
 /** Running cumulative size, walking outward from the best price. */
 function withTotals(levels: Level[]): Row[] {
@@ -28,12 +33,13 @@ export function OrderBook({
 }) {
   const { bids, asks, loading, error } = useOrderBook(market, ROWS);
 
-  const { bidRows, askRows, maxTotal, spread, spreadPct, mid } = useMemo(() => {
+  const { bidRows, askRows, maxTotal, spread, spreadPct, mid, digits } = useMemo(() => {
     const bidRows = withTotals(bids);
     const askRows = withTotals(asks);
     const bestBid = Number(bids[0]?.[0]);
     const bestAsk = Number(asks[0]?.[0]);
     const haveBoth = Number.isFinite(bestBid) && Number.isFinite(bestAsk);
+    const levels = [...bids, ...asks];
 
     return {
       bidRows,
@@ -47,6 +53,10 @@ export function OrderBook({
       spread: haveBoth ? bestAsk - bestBid : null,
       spreadPct: haveBoth ? ((bestAsk - bestBid) / bestAsk) * 100 : null,
       mid: haveBoth ? (bestAsk + bestBid) / 2 : null,
+      digits: {
+        price: digitsFor(levels.map(([price]) => price)),
+        size: digitsFor(levels.map(([, size]) => size), 2, 6),
+      },
     };
   }, [bids, asks]);
 
@@ -54,6 +64,7 @@ export function OrderBook({
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-[var(--nx-border)] px-3 py-2.5">
         <h2 className="text-sm font-semibold">Order book</h2>
+        <LiveIndicator />
       </div>
 
       <div className="nx-label grid grid-cols-3 px-3 py-1.5">
@@ -81,6 +92,7 @@ export function OrderBook({
                 key={`a${row.price}`}
                 row={row}
                 maxTotal={maxTotal}
+                digits={digits}
                 side="ask"
                 onSelect={onSelectPrice}
               />
@@ -89,11 +101,11 @@ export function OrderBook({
 
           <div className="my-1 flex items-baseline justify-between border-y border-[var(--nx-border)] px-3 py-2">
             <span className="nx-num text-base font-semibold text-[var(--nx-text)]">
-              {mid !== null ? formatNumber(mid, 2) : "—"}
+              {mid !== null ? formatNumber(mid, digits.price) : "—"}
             </span>
             <span className="nx-num text-[11px] text-[var(--nx-text-tertiary)]">
               {spread !== null && spreadPct !== null
-                ? `${formatNumber(spread, 2)} (${spreadPct.toFixed(3)}%)`
+                ? `${formatNumber(spread, digits.price)} (${spreadPct.toFixed(3)}%)`
                 : "—"}
             </span>
           </div>
@@ -104,6 +116,7 @@ export function OrderBook({
                 key={`b${row.price}`}
                 row={row}
                 maxTotal={maxTotal}
+                digits={digits}
                 side="bid"
                 onSelect={onSelectPrice}
               />
@@ -118,29 +131,42 @@ export function OrderBook({
 function BookRow({
   row,
   maxTotal,
+  digits,
   side,
   onSelect,
 }: {
   row: Row;
   maxTotal: number;
+  digits: Digits;
   side: "bid" | "ask";
   onSelect?: (price: string) => void;
 }) {
   const width = Math.min(100, (row.total / maxTotal) * 100);
+  // Flash a level when its resting size changes, like a real venue's book.
+  const tick = useTick(row.size);
 
   return (
     <button
       type="button"
       onClick={() => onSelect?.(row.price)}
       title={`${side === "bid" ? "Bid" : "Ask"} ${row.price}`}
-      className="relative grid w-full grid-cols-3 px-3 py-[3px] text-left transition-colors hover:bg-[var(--nx-surface-hover)]"
+      className="nx-enter relative grid w-full grid-cols-3 px-3 py-[3px] text-left transition-colors hover:bg-[var(--nx-surface-hover)]"
     >
+      {tick.direction && (
+        <span
+          key={tick.seq}
+          aria-hidden
+          className={`absolute inset-0 ${
+            side === "bid" ? "nx-flash-up" : "nx-flash-down"
+          }`}
+        />
+      )}
       {/* Depth bar grows from the right so the shape reads as a wall
           building away from the spread. */}
       <span
         aria-hidden
         style={{ width: `${width}%` }}
-        className={`absolute inset-y-0 right-0 ${
+        className={`absolute inset-y-0 right-0 transition-[width] duration-300 ease-out ${
           side === "bid" ? "bg-[var(--nx-up-soft)]" : "bg-[var(--nx-down-soft)]"
         }`}
       />
@@ -149,13 +175,13 @@ function BookRow({
           side === "bid" ? "text-[var(--nx-up)]" : "text-[var(--nx-down)]"
         }`}
       >
-        {formatNumber(row.price, 2)}
+        {formatNumber(row.price, digits.price)}
       </span>
       <span className="nx-num relative text-right text-xs text-[var(--nx-text)]">
-        {formatNumber(row.size, 2)}
+        {formatNumber(row.size, digits.size)}
       </span>
       <span className="nx-num relative text-right text-xs text-[var(--nx-text-secondary)]">
-        {formatNumber(row.total, 2)}
+        {formatNumber(row.total, digits.size)}
       </span>
     </button>
   );

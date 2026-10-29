@@ -3,15 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "description": "Real-time crypto trading terminal: live order book, streaming candlestick charts and low-latency market data over a multiplexed WebSocket.",
-  "author": "",
-  "license": "ISC",
+  "author": "Yuvraj Singh",
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
-    "check": "npm run lint && npm run typecheck",
-    "typecheck": "tsc --noEmit"
+    "check": "npm run lint && npm run typecheck && npm test",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
@@ -33,6 +34,7 @@
     "@types/react": "19.1.12",
     "eslint": "^9.39.1",
     "eslint-config-next": "^15.5.26",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vitest": "^3.2.4"
   }
 }

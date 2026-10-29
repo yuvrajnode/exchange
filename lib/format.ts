@@ -17,6 +17,24 @@ export function formatPrice(value: number | string): string {
   return USD(Math.abs(n) < 1 ? 4 : 2).format(n);
 }
 
+/** Decimal places a quoted number string carries: "147.25" → 2, "0.0000213" → 7. */
+export function decimalsOf(value: string): number {
+  const dot = value.indexOf(".");
+  return dot === -1 ? 0 : value.length - dot - 1;
+}
+
+/**
+ * Decimal places to show a column of upstream figures at. The exchange quotes
+ * each price and size to the market's tick and lot, so the longest one is the
+ * right precision. Hard-coding 2 rendered every level of a sub-cent market
+ * such as BONK/USDC as "0.00", and every BTC size under 0.005 as "0.00".
+ */
+export function digitsFor(values: readonly string[], min = 2, max = 8): number {
+  let digits = min;
+  for (const value of values) digits = Math.max(digits, decimalsOf(value));
+  return Math.min(digits, max);
+}
+
 /** Bare number, no currency symbol — for order books and size columns. */
 export function formatNumber(value: number | string, digits = 2): string {
   const n = typeof value === "string" ? Number(value) : value;

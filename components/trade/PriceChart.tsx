@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChartManager } from "@/app/utils/ChartManager";
 import { getKlines } from "@/app/utils/httpClient";
+import { digitsFor } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /** Interval → how far back to backfill, so each view shows a useful window. */
@@ -52,7 +53,8 @@ export function PriceChart({ market }: { market: string }) {
               timestamp: new Date(k.end).getTime(),
             }))
             .sort((a, b) => a.timestamp - b.timestamp),
-          { background: "transparent", color: "#949dac" }
+          { background: "transparent", color: "#949dac" },
+          digitsFor(klines.flatMap((k) => [k.open, k.high, k.low, k.close]))
         );
       })
       .catch(() => {

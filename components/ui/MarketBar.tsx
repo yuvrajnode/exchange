@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import type { Ticker } from "@/app/utils/types";
+import { useTick } from "@/app/utils/useTick";
 import { getAllInfo } from "@/app/utils/httpClient";
 import { CoinIcon } from "@/components/ui/primitives/CoinIcon";
 import { MarketPicker } from "@/components/trade/MarketPicker";
 import { Change } from "@/components/ui/primitives/Change";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCompact, formatNumber, formatPrice } from "@/lib/format";
+import { digitsFor, formatCompact, formatNumber, formatPrice } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export function MarketBar({
   market,
@@ -37,6 +40,8 @@ export function MarketBar({
 
   const change = ticker ? Number(ticker.priceChangePercent) * 100 : NaN;
   const up = change >= 0;
+  const tick = useTick(ticker?.lastPrice);
+  const digits = ticker ? digitsFor([ticker.lastPrice, ticker.high, ticker.low]) : 2;
 
   return (
     <div className="flex items-center gap-5 overflow-x-auto px-3 py-2 no-scrollbar">
@@ -58,11 +63,22 @@ export function MarketBar({
       <div className="flex shrink-0 flex-col justify-center">
         {ticker ? (
           <span
-            className={`nx-num text-lg font-semibold ${
-              up ? "text-[var(--nx-up)]" : "text-[var(--nx-down)]"
-            }`}
+            // Remounting on each tick restarts the flash.
+            key={tick.seq}
+            className={cn(
+              "nx-num -mx-1 inline-flex items-center gap-1 rounded-[var(--nx-radius-sm)] px-1 text-lg font-semibold",
+              up ? "text-[var(--nx-up)]" : "text-[var(--nx-down)]",
+              tick.direction && `nx-flash-${tick.direction}`
+            )}
           >
             {formatPrice(ticker.lastPrice)}
+            {/* Last tick's direction, separate from the 24h colour. */}
+            {tick.direction === "up" && (
+              <ArrowUp className="size-3.5 text-[var(--nx-up)]" aria-label="Ticked up" />
+            )}
+            {tick.direction === "down" && (
+              <ArrowDown className="size-3.5 text-[var(--nx-down)]" aria-label="Ticked down" />
+            )}
           </span>
         ) : (
           <Skeleton className="h-6 w-24" />
@@ -73,8 +89,8 @@ export function MarketBar({
       <Stat label="24h change">
         {ticker ? <Change value={change} /> : <Skeleton className="h-4 w-20" />}
       </Stat>
-      <Stat label="24h high">{ticker ? formatNumber(ticker.high, 2) : null}</Stat>
-      <Stat label="24h low">{ticker ? formatNumber(ticker.low, 2) : null}</Stat>
+      <Stat label="24h high">{ticker ? formatNumber(ticker.high, digits) : null}</Stat>
+      <Stat label="24h low">{ticker ? formatNumber(ticker.low, digits) : null}</Stat>
       <Stat label={`24h volume (${base})`}>
         {ticker ? formatCompact(ticker.volume) : null}
       </Stat>

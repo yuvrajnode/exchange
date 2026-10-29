@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { getTrades } from "@/app/utils/httpClient";
 import { usePolling } from "@/app/utils/usePolling";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatNumber, formatTime } from "@/lib/format";
+import { digitsFor, formatNumber, formatTime } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export function TradeTape({ market }: { market: string }) {
   const load = useCallback(
@@ -12,7 +13,22 @@ export function TradeTape({ market }: { market: string }) {
     [market]
   );
   const { data, error, loading } = usePolling(load, 4000, [market]);
-  const trades = data ?? [];
+  const trades = useMemo(() => data ?? [], [data]);
+  // Trades newer than the previous poll's newest slide in. The first load
+  // doesn't animate: those trades aren't news.
+  const newest = trades[0]?.id;
+  const [seen, setSeen] = useState<{ newest?: number; previous?: number }>({});
+  if (newest !== seen.newest) {
+    setSeen({ newest, previous: seen.newest });
+  }
+
+  const digits = useMemo(
+    () => ({
+      price: digitsFor(trades.map((t) => t.price)),
+      size: digitsFor(trades.map((t) => t.quantity), 2, 6),
+    }),
+    [trades]
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -41,20 +57,24 @@ export function TradeTape({ market }: { market: string }) {
           trades.map((trade) => {
             // isBuyerMaker means the resting order was a bid, so the taker sold.
             const buy = !trade.isBuyerMaker;
+            const fresh = seen.previous !== undefined && trade.id > seen.previous;
             return (
               <div
                 key={trade.id}
-                className="grid grid-cols-3 px-3 py-[3px] transition-colors hover:bg-[var(--nx-surface-hover)]"
+                className={cn(
+                  "grid grid-cols-3 px-3 py-[3px] transition-colors hover:bg-[var(--nx-surface-hover)]",
+                  fresh && (buy ? "nx-trade-in-up" : "nx-trade-in-down")
+                )}
               >
                 <span
                   className={`nx-num text-xs ${
                     buy ? "text-[var(--nx-up)]" : "text-[var(--nx-down)]"
                   }`}
                 >
-                  {formatNumber(trade.price, 2)}
+                  {formatNumber(trade.price, digits.price)}
                 </span>
                 <span className="nx-num text-right text-xs text-[var(--nx-text)]">
-                  {formatNumber(trade.quantity, 2)}
+                  {formatNumber(trade.quantity, digits.size)}
                 </span>
                 <span className="nx-num text-right text-xs text-[var(--nx-text-tertiary)]">
                   {formatTime(trade.timestamp)}
