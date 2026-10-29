@@ -24,8 +24,11 @@ through its own route handlers.
 ## Features
 
 - **One socket, every stream.** A singleton `SignalingManager` multiplexes
-  ticker and depth subscriptions across every mounted panel, with message
-  buffering before the socket opens and per-panel callback registration.
+  ticker and depth subscriptions across every mounted panel. Frames are routed
+  by stream, so a market switch can't leak the old market's updates into the
+  new book. Subscriptions are reference counted, and a dropped socket
+  reconnects with backoff and re-subscribes, with a live/reconnecting
+  indicator in the order book.
 - **A real order book.** Seeded from a REST snapshot, then patched by
   incremental depth messages — inserting new levels, removing cleared ones,
   and re-seeding every 20s so it can't drift. Crossed states are resolved
@@ -35,6 +38,12 @@ through its own route handlers.
   Clicking a level in the book fills the order form's price.
 - **Markets screen.** Sortable, searchable and paginated, with favorites in
   `localStorage` and an SVG sparkline per row.
+- **Tick-accurate figures.** Prices and sizes are shown to the market's own
+  tick and lot, so sub-cent markets like BONK/USDC read correctly instead of
+  "0.00".
+- **Motion that means something.** Prices flash on each tick, book levels
+  flash as they resize, and new trades slide into the tape. All of it respects
+  `prefers-reduced-motion`.
 - **Bounded upstreams.** Every external call goes through `/api/v1/*` with a
   hard timeout and short-lived caching.
 
@@ -78,7 +87,7 @@ rather than a hung request.
 | Path                        | Responsibility                                        |
 | --------------------------- | ----------------------------------------------------- |
 | `app/utils/SignalingManager`| Shared WebSocket, buffering, subscription callbacks    |
-| `app/utils/useOrderBook`    | Snapshot + incremental depth merge, cross resolution   |
+| `app/utils/useOrderBook`    | Snapshot + incremental depth merge (`orderBook.ts`)    |
 | `app/utils/useTicker`       | Ticker snapshot patched by the live stream             |
 | `app/utils/usePolling`      | Interval polling with exponential backoff on failure   |
 | `app/utils/ChartManager`    | lightweight-charts lifecycle                           |
@@ -111,6 +120,8 @@ Other scripts:
 npm run build      # production build
 npm run start      # serve the production build
 npm run lint       # eslint, zero-warning policy
+npm run typecheck  # tsc --noEmit
+npm test           # vitest: stream routing, reconnect, order book, formatting
 ```
 
 ---
@@ -128,7 +139,8 @@ components/
   markets/          summary, highlights, markets table
   trade/            chart, order book, order form, trade tape, market picker
   ui/primitives/    Button, Panel, Change, CoinIcon, Sparkline, Logo
-lib/                config, upstream proxy, formatting, cn()
+lib/                config, upstream proxy, formatting, tick direction, cn()
+test/               vitest suites
 ```
 
 ---
@@ -146,4 +158,4 @@ digits don't shift as prices tick.
 ## Deployment
 
 Deployed on **Vercel**. Every push to `main` runs the GitHub Actions CI pipeline
-(`lint` + `build`) and triggers a deployment.
+(`lint` + `typecheck` + `test` + `build`) and triggers a deployment.
