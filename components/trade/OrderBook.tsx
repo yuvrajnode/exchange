@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useOrderBook, type Level } from "@/app/utils/useOrderBook";
+import { LiveIndicator } from "@/components/ui/primitives/LiveIndicator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatNumber } from "@/lib/format";
 
@@ -54,6 +55,7 @@ export function OrderBook({
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-[var(--nx-border)] px-3 py-2.5">
         <h2 className="text-sm font-semibold">Order book</h2>
+        <LiveIndicator />
       </div>
 
       <div className="nx-label grid grid-cols-3 px-3 py-1.5">

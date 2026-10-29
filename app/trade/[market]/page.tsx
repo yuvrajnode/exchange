@@ -60,7 +60,10 @@ export default function TradePage() {
           </div>
 
           <div className="nx-panel h-[300px] overflow-hidden lg:col-span-3 lg:h-auto">
-            <TradeTape market={market} />
+            {/* Remount per market: polling keeps the last data across a
+                dependency change, which showed the previous market's trades
+                until the first poll for the new one landed. */}
+            <TradeTape key={market} market={market} />
           </div>
         </div>
 
