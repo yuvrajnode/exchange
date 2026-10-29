@@ -30,7 +30,7 @@ export default function TradePage() {
       <Appbar TrueButton={1} />
 
       <main className="mx-auto max-w-[1600px] p-3">
-        <div className="nx-panel mb-3 overflow-visible">
+        <div className="nx-panel nx-rise mb-3 overflow-visible">
           <MarketBar market={market} ticker={ticker} />
         </div>
 
@@ -41,15 +41,24 @@ export default function TradePage() {
           than pushing the page.
         */}
         <div className="grid gap-3 lg:grid-cols-12 lg:grid-rows-[440px_300px]">
-          <div className="nx-panel h-[380px] overflow-hidden lg:col-span-6 lg:row-span-2 lg:h-auto">
+          <div
+            className="nx-panel nx-rise h-[380px] overflow-hidden lg:col-span-6 lg:row-span-2 lg:h-auto"
+            style={{ animationDelay: "60ms" }}
+          >
             <PriceChart market={market} />
           </div>
 
-          <div className="nx-panel h-[560px] overflow-hidden lg:col-span-3 lg:row-span-2 lg:h-auto">
+          <div
+            className="nx-panel nx-rise h-[560px] overflow-hidden lg:col-span-3 lg:row-span-2 lg:h-auto"
+            style={{ animationDelay: "120ms" }}
+          >
             <OrderBook market={market} onSelectPrice={setSelectedPrice} />
           </div>
 
-          <div className="nx-panel overflow-hidden lg:col-span-3">
+          <div
+            className="nx-panel nx-rise overflow-hidden lg:col-span-3"
+            style={{ animationDelay: "180ms" }}
+          >
             <OrderForm
               // Remount per market so no quantity or side carries over.
               key={market}
@@ -59,7 +68,10 @@ export default function TradePage() {
             />
           </div>
 
-          <div className="nx-panel h-[300px] overflow-hidden lg:col-span-3 lg:h-auto">
+          <div
+            className="nx-panel nx-rise h-[300px] overflow-hidden lg:col-span-3 lg:h-auto"
+            style={{ animationDelay: "240ms" }}
+          >
             {/* Remount per market: polling keeps the last data across a
                 dependency change, which showed the previous market's trades
                 until the first poll for the new one landed. */}

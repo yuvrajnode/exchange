@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useOrderBook, type Level } from "@/app/utils/useOrderBook";
+import { useTick } from "@/app/utils/useTick";
 import { LiveIndicator } from "@/components/ui/primitives/LiveIndicator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { digitsFor, formatNumber } from "@/lib/format";
@@ -141,20 +142,31 @@ function BookRow({
   onSelect?: (price: string) => void;
 }) {
   const width = Math.min(100, (row.total / maxTotal) * 100);
+  // Flash a level when its resting size changes, like a real venue's book.
+  const tick = useTick(row.size);
 
   return (
     <button
       type="button"
       onClick={() => onSelect?.(row.price)}
       title={`${side === "bid" ? "Bid" : "Ask"} ${row.price}`}
-      className="relative grid w-full grid-cols-3 px-3 py-[3px] text-left transition-colors hover:bg-[var(--nx-surface-hover)]"
+      className="nx-enter relative grid w-full grid-cols-3 px-3 py-[3px] text-left transition-colors hover:bg-[var(--nx-surface-hover)]"
     >
+      {tick.direction && (
+        <span
+          key={tick.seq}
+          aria-hidden
+          className={`absolute inset-0 ${
+            side === "bid" ? "nx-flash-up" : "nx-flash-down"
+          }`}
+        />
+      )}
       {/* Depth bar grows from the right so the shape reads as a wall
           building away from the spread. */}
       <span
         aria-hidden
         style={{ width: `${width}%` }}
-        className={`absolute inset-y-0 right-0 ${
+        className={`absolute inset-y-0 right-0 transition-[width] duration-300 ease-out ${
           side === "bid" ? "bg-[var(--nx-up-soft)]" : "bg-[var(--nx-down-soft)]"
         }`}
       />

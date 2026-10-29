@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { getTrades } from "@/app/utils/httpClient";
 import { usePolling } from "@/app/utils/usePolling";
 import { Skeleton } from "@/components/ui/skeleton";
 import { digitsFor, formatNumber, formatTime } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export function TradeTape({ market }: { market: string }) {
   const load = useCallback(
@@ -13,6 +14,14 @@ export function TradeTape({ market }: { market: string }) {
   );
   const { data, error, loading } = usePolling(load, 4000, [market]);
   const trades = useMemo(() => data ?? [], [data]);
+  // Trades newer than the previous poll's newest slide in. The first load
+  // doesn't animate: those trades aren't news.
+  const newest = trades[0]?.id;
+  const [seen, setSeen] = useState<{ newest?: number; previous?: number }>({});
+  if (newest !== seen.newest) {
+    setSeen({ newest, previous: seen.newest });
+  }
+
   const digits = useMemo(
     () => ({
       price: digitsFor(trades.map((t) => t.price)),
@@ -48,10 +57,14 @@ export function TradeTape({ market }: { market: string }) {
           trades.map((trade) => {
             // isBuyerMaker means the resting order was a bid, so the taker sold.
             const buy = !trade.isBuyerMaker;
+            const fresh = seen.previous !== undefined && trade.id > seen.previous;
             return (
               <div
                 key={trade.id}
-                className="grid grid-cols-3 px-3 py-[3px] transition-colors hover:bg-[var(--nx-surface-hover)]"
+                className={cn(
+                  "grid grid-cols-3 px-3 py-[3px] transition-colors hover:bg-[var(--nx-surface-hover)]",
+                  fresh && (buy ? "nx-trade-in-up" : "nx-trade-in-down")
+                )}
               >
                 <span
                   className={`nx-num text-xs ${
