@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getTrades } from "@/app/utils/httpClient";
 import { usePolling } from "@/app/utils/usePolling";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatNumber, formatTime } from "@/lib/format";
+import { digitsFor, formatNumber, formatTime } from "@/lib/format";
 
 export function TradeTape({ market }: { market: string }) {
   const load = useCallback(
@@ -12,7 +12,14 @@ export function TradeTape({ market }: { market: string }) {
     [market]
   );
   const { data, error, loading } = usePolling(load, 4000, [market]);
-  const trades = data ?? [];
+  const trades = useMemo(() => data ?? [], [data]);
+  const digits = useMemo(
+    () => ({
+      price: digitsFor(trades.map((t) => t.price)),
+      size: digitsFor(trades.map((t) => t.quantity), 2, 6),
+    }),
+    [trades]
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -51,10 +58,10 @@ export function TradeTape({ market }: { market: string }) {
                     buy ? "text-[var(--nx-up)]" : "text-[var(--nx-down)]"
                   }`}
                 >
-                  {formatNumber(trade.price, 2)}
+                  {formatNumber(trade.price, digits.price)}
                 </span>
                 <span className="nx-num text-right text-xs text-[var(--nx-text)]">
-                  {formatNumber(trade.quantity, 2)}
+                  {formatNumber(trade.quantity, digits.size)}
                 </span>
                 <span className="nx-num text-right text-xs text-[var(--nx-text-tertiary)]">
                   {formatTime(trade.timestamp)}

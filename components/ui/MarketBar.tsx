@@ -7,7 +7,7 @@ import { CoinIcon } from "@/components/ui/primitives/CoinIcon";
 import { MarketPicker } from "@/components/trade/MarketPicker";
 import { Change } from "@/components/ui/primitives/Change";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCompact, formatNumber, formatPrice } from "@/lib/format";
+import { digitsFor, formatCompact, formatNumber, formatPrice } from "@/lib/format";
 
 export function MarketBar({
   market,
@@ -37,6 +37,7 @@ export function MarketBar({
 
   const change = ticker ? Number(ticker.priceChangePercent) * 100 : NaN;
   const up = change >= 0;
+  const digits = ticker ? digitsFor([ticker.lastPrice, ticker.high, ticker.low]) : 2;
 
   return (
     <div className="flex items-center gap-5 overflow-x-auto px-3 py-2 no-scrollbar">
@@ -73,8 +74,8 @@ export function MarketBar({
       <Stat label="24h change">
         {ticker ? <Change value={change} /> : <Skeleton className="h-4 w-20" />}
       </Stat>
-      <Stat label="24h high">{ticker ? formatNumber(ticker.high, 2) : null}</Stat>
-      <Stat label="24h low">{ticker ? formatNumber(ticker.low, 2) : null}</Stat>
+      <Stat label="24h high">{ticker ? formatNumber(ticker.high, digits) : null}</Stat>
+      <Stat label="24h low">{ticker ? formatNumber(ticker.low, digits) : null}</Stat>
       <Stat label={`24h volume (${base})`}>
         {ticker ? formatCompact(ticker.volume) : null}
       </Stat>

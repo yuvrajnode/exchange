@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Info } from "lucide-react";
 import { Button } from "@/components/ui/primitives/Button";
-import { formatNumber } from "@/lib/format";
+import { digitsFor, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /**
@@ -49,6 +49,9 @@ export function OrderForm({
     return qty * effectivePrice;
   }, [quantity, effectivePrice]);
 
+  // Sub-cent markets need more than two places or every price reads "0.00".
+  const priceDigits = digitsFor([lastPrice ?? "", limitPrice]);
+
   const available = side === "buy" ? DEMO_BALANCE.quote : DEMO_BALANCE.base;
   const availableUnit = side === "buy" ? quote : base;
 
@@ -68,7 +71,7 @@ export function OrderForm({
   const submit = () => {
     setPlaced(
       `${side === "buy" ? "Buy" : "Sell"} ${formatNumber(quantity, 4)} ${base} at ${
-        type === "market" ? "market" : formatNumber(effectivePrice, 2)
+        type === "market" ? "market" : formatNumber(effectivePrice, priceDigits)
       }`
     );
     setQuantity("");
@@ -134,7 +137,7 @@ export function OrderForm({
         label="Price"
         suffix={quote}
         value={type === "market" ? "" : limitPrice}
-        placeholder={type === "market" ? "Market" : formatNumber(lastPrice ?? 0, 2)}
+        placeholder={type === "market" ? "Market" : formatNumber(lastPrice ?? 0, priceDigits)}
         onChange={setLimitPrice}
         disabled={type === "market"}
       />
